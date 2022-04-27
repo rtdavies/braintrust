@@ -17,9 +17,10 @@ function start() {
     }
     
     cortex = new Cortex(config)
+    cortex.connect()
     
-    let streams = ['fac']
-    cortex.sub(streams)
+    // let streams = ['fac']
+    // cortex.subscribe(streams)
 }
 
 function init(){
@@ -28,8 +29,8 @@ function init(){
 
 function teardown() {
     if (running && cortex) {
-        // TODO: implement close()
-        // cortex.close()
+        // TODO: implement disconnect()
+        // cortex.disconnect()
     }
 }
 
@@ -39,6 +40,30 @@ class Cortex {
         this.config = config
     }
     
+    /*
+     * see Cortex API documnetation for steps to create an API session
+     * https://emotiv.gitbook.io/cortex-api/overview-of-api-flow
+     */
+    connect(){
+        console.log('connect()')
+        this.socket.addEventListener('open',async ()=>{
+            let requestAccessResult = ""
+            await this.requestAccess().then((result)=>{requestAccessResult=result})
+                    
+            if ("error" in requestAccessResult){
+                throw new Error('You must login on CortexUI before request for grant access')
+            } else {
+                if(requestAccessResult?.result?.accessGranted){
+                    await this.initializeSession()
+                }
+                else{
+                    console.log('You must accept access request from this app on CortexUI then rerun')
+                    throw new Error('You must accept access request from this app on CortexUI')
+                }
+            }   
+        })
+    }                
+
     requestAccess(){
         console.log('requestAccess()')
         let socket = this.socket
@@ -55,7 +80,6 @@ class Cortex {
                 "id": REQUEST_ACCESS_ID
             }
             
-            console.log('start send request: ',requestAccessRequest)
             socket.send(JSON.stringify(requestAccessRequest));
             
             socket.addEventListener('message', (message)=>{
@@ -70,6 +94,28 @@ class Cortex {
             })
         })
     }
+    
+     async initializeSession(){
+        let headsetId = ""
+        await this.queryHeadsetId().then((headset)=>{headsetId = headset})
+        
+        let controlDeviceResult = ""
+        await this.controlDevice(headsetId).then((result)=>{controlDeviceResult=result})
+        
+        let authToken = ""
+        await this.authorize().then((auth)=>{authToken = auth})
+        
+        let sessionId = ""
+        await this.createSession(authToken, headsetId).then((result)=>{sessionId=result})
+        
+        console.log('Headset Id: ' + headsetId)
+        console.log('ControlDevice status: ' + controlDeviceResult?.result?.message)
+        console.log('Auth token: ' + authToken)
+        console.log('Session Id: ' + sessionId)
+
+        this.authToken = authToken
+        this.sessionId = sessionId
+    }    
     
     queryHeadsetId(){
         console.log('queryHeadsetId()')
@@ -88,8 +134,6 @@ class Cortex {
                 try {
                     let msgData = JSON.parse(message.data)
                     if(msgData.id==QUERY_HEADSET_ID){
-                        // console.log(data)
-                        // console.log(JSON.parse(data)['result'].length)
                         if(msgData.result.length > 0){
                             let headsetId = msgData.result[0].id
                             resolve(headsetId)
@@ -193,7 +237,15 @@ class Cortex {
             })
         })
     }
-        
+    
+    subscribe(streams){
+        this.subRequest(streams, this.authToken, this.sessionId)
+        this.socket.addEventListener('message', (data)=>{
+            // log stream data to file or console here
+            console.log(JSON.stringify(data))
+        })
+    }                
+    
     subRequest(stream, authToken, sessionId){
         let socket = this.socket
         const SUB_REQUEST_ID = 6 
@@ -221,87 +273,4 @@ class Cortex {
             }
         })
     }
-    
-    /**
-    * - query headset infor
-    * - connect to headset with control device request
-    * - authentication and get back auth token
-    * - create session and get back session id
-    */
-    async querySessionInfo(){
-        let headsetId=""
-        await this.queryHeadsetId().then((headset)=>{headsetId = headset})
-        this.headsetId = headsetId
-        
-        let ctResult=""
-        await this.controlDevice(headsetId).then((result)=>{ctResult=result})
-        this.ctResult = ctResult
-        console.log(ctResult)
-        
-        let authToken=""
-        await this.authorize().then((auth)=>{authToken = auth})
-        this.authToken = authToken
-        
-        let sessionId = ""
-        await this.createSession(authToken, headsetId).then((result)=>{sessionId=result})
-        this.sessionId = sessionId
-        
-        console.log('HEADSET ID -----------------------------------')
-        console.log(this.headsetId)
-        console.log('\r\n')
-        console.log('CONNECT STATUS -------------------------------')
-        console.log(this.ctResult)
-        console.log('\r\n')
-        console.log('AUTH TOKEN -----------------------------------')
-        console.log(this.authToken)
-        console.log('\r\n')
-        console.log('SESSION ID -----------------------------------')
-        console.log(this.sessionId)
-        console.log('\r\n')
-    }
-    
-    /**
-    * - check if connected
-    * - check if app is granted for access
-    * - query session info to prepare for sub and train
-    */
-    async checkGrantAccessAndQuerySessionInfo(){
-        let requestAccessResult = ""
-        console.log('checkGrantAccessAndQuerySessionInfo()')
-        await this.requestAccess().then((result)=>{requestAccessResult=result})
-                
-        // check if logged in CortexUI
-        if ("error" in requestAccessResult){
-            console.log('You must login on CortexUI before request for grant access then rerun')
-            throw new Error('You must login on CortexUI before request for grant access')
-        }else{
-            console.log(requestAccessResult['result']['message'])
-            // console.log(accessGranted['result'])
-            if(requestAccessResult['result']['accessGranted']){
-                await this.querySessionInfo()
-            }
-            else{
-                console.log('You must accept access request from this app on CortexUI then rerun')
-                throw new Error('You must accept access request from this app on CortexUI')
-            }
-        }   
-    }
-    
-    
-    /**
-    * 
-    * - check login and grant access
-    * - subcribe for stream
-    * - logout data stream to console or file
-    */
-    sub(streams){
-        this.socket.addEventListener('open',async ()=>{
-            await this.checkGrantAccessAndQuerySessionInfo()
-            this.subRequest(streams, this.authToken, this.sessionId)
-            this.socket.addEventListener('message', (data)=>{
-                // log stream data to file or console here
-                console.log(JSON.stringify(data))
-            })
-        })
-    }                
 }
