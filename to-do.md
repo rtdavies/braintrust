@@ -13,3 +13,7 @@
 1. Create model to back UI with 1 event type (e.g. smile)
 1. Create a UI animation to trigger when model changes by some threshold
 1. Add additional events to model
+1. Disable the connect button after successful connection. Add new button to disconnect.
+1. Checkbox to enable/disable logging events
+1. Display event stream on the web page itself (transparent text box, semi-transparent font)
+1. ~~add try/catch blocks around form processing to ensure the functions always return false (and thus the page is never reloaded by a form submission~~)

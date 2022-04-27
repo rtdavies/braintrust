@@ -1,45 +1,49 @@
 let cortex = null;
 
+// Get Cortex API Connection Configuration form values and connect to server
 function connect(){
-    if (!cortex) {
-        connecting = true;
-        let config = {
-            "clientId":document.getElementById('clientid').value,
-            "clientSecret":document.getElementById('clientsecret').value,
-            "websocketUrl":document.getElementById('websocketurl').value
-        }
+    try {
+        if (!cortex) {
+            connecting = true;
+            let config = {
+                "clientId":document.getElementById('clientid').value,
+                "clientSecret":document.getElementById('clientsecret').value,
+                "websocketUrl":document.getElementById('websocketurl').value
+            }
 
-        cortex = new Cortex(config)
-        cortex.connect()
+            cortex = new Cortex(config)
+            cortex.connect()
+        }
+    } catch (error) {
+        cortex = null
+        console.log('Error while connecting to Cortex server: ' + error)
     }
 
     return false // don't reload page
 }
 
-function subscribe() {
+// Update event subscriptions to match checked checkboxes
+function updateSubscriptions() {
     let streams = []
-    if (cortex.session) {
-        // facial expressions event stream
-        let faccheckbox = document.getElementById('faccheckbox')
-        if (faccheckbox.checked) {
-            streams.push(faccheckbox.value)
-        }
+    try {
+        if (cortex.session) {
+            document.getElementById("subscribefieldset")
+                .querySelectorAll("[type=checkbox]:checked")
+                .forEach(checkbox => streams.push(checkbox.value))
 
-        // headset motion event stream
-        let motcheckbox = document.getElementById('motcheckbox')
-        if (motcheckbox.checked) {
-            streams.push(motcheckbox.value)
+            cortex.updateSubscriptions(streams)
         }
-
-        cortex.subscribe(streams)
+    } catch (error) {
+        console.log('Error while subscribing to streams' + JSON.stringify(streams) + ': ' + error)
     }
 
     return false // don't reload page
 }
 
+// Called on page load. Binds above functions to the html forms
 function init(){
     document.getElementById('connectform').onsubmit = connect
-    document.getElementById('subscribeform').onsubmit = subscribe
+    document.getElementById('subscribeform').onsubmit = updateSubscriptions
 }
 
 function teardown() {
@@ -49,7 +53,20 @@ function teardown() {
     }
 }
 
+// Constants to represent Cortex API message types
+apis = {
+    REQUEST_ACCESS: 1,
+    QUERY_HEADSETS: 2,
+    CONTROL_DEVICE: 3,
+    AUTHORIZE: 4,
+    CREATE_SESSION: 5,
+    SUBSCRIBE: 6,
+    UNSUBSCRIBE: 7
+}
+
+// A Cortex server that exposes a websocket API
 class Cortex {
+
     constructor (config) {
         this.socket = new WebSocket(config.websocketUrl)
         this.config = config
@@ -85,7 +102,6 @@ class Cortex {
         let socket = this.socket
         let config = this.config
         return new Promise(function(resolve, reject){
-            const REQUEST_ACCESS_ID = 1
             let requestAccessRequest = {
                 "jsonrpc": "2.0",
                 "method": "requestAccess",
@@ -93,7 +109,7 @@ class Cortex {
                     "clientId": config.clientId,
                     "clientSecret": config.clientSecret
                 },
-                "id": REQUEST_ACCESS_ID
+                "id": apis.REQUEST_ACCESS
             }
 
             socket.send(JSON.stringify(requestAccessRequest));
@@ -101,7 +117,7 @@ class Cortex {
             socket.addEventListener('message', (message)=>{
                 try {
                     let msgData = JSON.parse(message.data)
-                    if(msgData.id==REQUEST_ACCESS_ID){
+                    if(msgData.id==apis.REQUEST_ACCESS){
                         resolve(msgData)
                     }
                 } catch (error) {
@@ -116,7 +132,7 @@ class Cortex {
         let controlDeviceResult = ""
         let authToken = ""
         let sessionId = ""
-        await this.queryHeadsetId()
+        await this.queryHeadsets()
         .then((headset)=>{
             headsetId = headset
             return this.controlDevice(headsetId)
@@ -143,13 +159,12 @@ class Cortex {
         }
     }
 
-    queryHeadsetId(){
-        console.log('queryHeadsetId()')
-        const QUERY_HEADSET_ID = 2
+    queryHeadsets(){
+        console.log('queryHeadsets()')
         let socket = this.socket
         let queryHeadsetRequest =  {
             "jsonrpc": "2.0",
-            "id": QUERY_HEADSET_ID,
+            "id": apis.QUERY_HEADSETS,
             "method": "queryHeadsets",
             "params": {}
         }
@@ -159,7 +174,7 @@ class Cortex {
             socket.addEventListener('message', (message)=>{
                 try {
                     let msgData = JSON.parse(message.data)
-                    if(msgData.id==QUERY_HEADSET_ID){
+                    if(msgData.id==apis.QUERY_HEADSETS){
                         if(msgData.result.length > 0){
                             let headsetId = msgData.result[0].id
                             resolve(headsetId)
@@ -181,20 +196,19 @@ class Cortex {
         let socket = this.socket
         let config = this.config
         return new Promise(function(resolve, reject){
-            const AUTHORIZE_ID = 4
             let authorizeRequest = {
                 "jsonrpc": "2.0", "method": "authorize",
                 "params": {
                     "clientId": config.clientId,
                     "clientSecret": config.clientSecret
                 },
-                "id": AUTHORIZE_ID
+                "id": apis.AUTHORIZE
             }
             socket.send(JSON.stringify(authorizeRequest))
             socket.addEventListener('message', (message)=>{
                 try {
                     let msgData = JSON.parse(message.data)
-                    if(msgData.id==AUTHORIZE_ID){
+                    if(msgData.id==apis.AUTHORIZE){
                         let cortexToken = msgData.result.cortexToken
                         resolve(cortexToken)
                     }
@@ -208,10 +222,9 @@ class Cortex {
     controlDevice(headsetId){
         console.log('controlDevice()')
         let socket = this.socket
-        const CONTROL_DEVICE_ID = 3
         let controlDeviceRequest = {
             "jsonrpc": "2.0",
-            "id": CONTROL_DEVICE_ID,
+            "id": apis.CONTROL_DEVICE,
             "method": "controlDevice",
             "params": {
                 "command": "connect",
@@ -223,7 +236,7 @@ class Cortex {
             socket.addEventListener('message', (message)=>{
                 try {
                     let msgData = JSON.parse(message.data)
-                    if(msgData.id==CONTROL_DEVICE_ID){
+                    if(msgData.id==apis.CONTROL_DEVICE){
                         resolve(msgData)
                     }
                 } catch (error) {
@@ -236,10 +249,9 @@ class Cortex {
     createSession(authToken, headsetId){
         console.log('createSession()')
         let socket = this.socket
-        const CREATE_SESSION_ID = 5
         let createSessionRequest = {
             "jsonrpc": "2.0",
-            "id": CREATE_SESSION_ID,
+            "id": apis.CREATE_SESSION,
             "method": "createSession",
             "params": {
                 "cortexToken": authToken,
@@ -253,7 +265,7 @@ class Cortex {
                 // console.log(data)
                 try {
                     let msgData = JSON.parse(message.data)
-                    if(msgData.id==CREATE_SESSION_ID){
+                    if(msgData.id==apis.CREATE_SESSION){
                         let sessionId = msgData.result.id
                         resolve(sessionId)
                     }
@@ -264,14 +276,14 @@ class Cortex {
         })
     }
 
-    async subscribe(streams){
+    async updateSubscriptions(streams){
         if (this.session.subscribedStreams.length > 0) {
             this.unsubscribeAll(this.session)
             this.session.subscribedStreams = []
         }
 
         if (streams.length > 0) {
-            this.subscribeStreams(streams, this.session.authToken, this.session.id)
+            this.subscribe(streams, this.session.authToken, this.session.id)
             this.socket.addEventListener('message', (data)=>{
                 // could check stream id here to see which stream the data are from
 
@@ -286,7 +298,6 @@ class Cortex {
     unsubscribeAll(session) {
         console.log('unsubscribeAll(' + JSON.stringify(session.subscribedStreams) + ')')
         let socket = this.socket
-        const UNSUB_REQUEST_ID = 7
         let subRequest = {
             "jsonrpc": "2.0",
             "method": "unsubscribe",
@@ -295,15 +306,14 @@ class Cortex {
                 "session": session.id,
                 "streams": session.subscribedStreams
             },
-            "id": UNSUB_REQUEST_ID
+            "id": apis.UNSUBSCRIBE
         }
         socket.send(JSON.stringify(subRequest))
     }
 
-    subscribeStreams(streams, authToken, sessionId) {
+    subscribe(streams, authToken, sessionId) {
         console.log('subscribeStreams(' + JSON.stringify(streams) + ')')
         let socket = this.socket
-        const SUB_REQUEST_ID = 6
         let subRequest = {
             "jsonrpc": "2.0",
             "method": "subscribe",
@@ -312,7 +322,7 @@ class Cortex {
                 "session": sessionId,
                 "streams": streams
             },
-            "id": SUB_REQUEST_ID
+            "id": apis.SUBSCRIBE
         }
         socket.send(JSON.stringify(subRequest))
         socket.addEventListener('message', (message)=>{
@@ -320,7 +330,7 @@ class Cortex {
                 // the result returns a stream id (sid) and streamName
                 // we should return the stream id
 
-                // if(JSON.parse(data)['id']==SUB_REQUEST_ID){
+                // if(JSON.parse(data)['id']==apis.SUBSCRIBE){
                 console.log(message.data)
                 // }
             } catch (error) {
