@@ -3,11 +3,11 @@
 1. ~~Subscribe to facial events~~
 1. ~~Add text field for URL (and any other text inputs?)~~
 1. ~~Convert the start() function to connect(). Don't subscribe to any events during start.~~
-1. Add checkboxes for each event type, disabled when not connected.
-1. Enable checkboxes on connection (clear any previously checked boxed before enabling).
+1. ~~Add checkboxes for each event stream type (e.g. "fac" or "mot"), disabled when not connected.~~
+1. ~~Enable checkboxes on connection (clear any previously checked boxed before enabling).~~
 1. Disable checkboxes when connection lost/closed.
 1. Subscribe when checked, unsubscribe when unchecked.
-1. Put form in div.
+1. ~~Put form in div.~~
 1. Add twisty to fold form-div closed/open
 1. Add foldable div to display events (the last 1000 or so?).
 1. Create model to back UI with 1 event type (e.g. smile)

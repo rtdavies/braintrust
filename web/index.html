@@ -11,18 +11,36 @@
     
     <h2>Brain Trust</h2>
     
-    <form id="form">
-        <label for="websocketurl">Web Socket URL:</label>
-        <input type="text" id="websocketurl" name="websocketurl" value="wss://localhost:6868"><br/>
+    <div id="inputdiv">
+        <form id="connectform">
+            <fieldset id="connectfieldset" form="connectform">
+                <legend>Cortex API Connection Configuration</legend>
 
-        <label for="clientid">Client Id:</label>
-        <input type="text" id="clientid" name="clientid" value="IX2l8ZRzuWVOVKDKUt12A1uvvJRrf838FYtbOPJl"><br/>
-        
-        <label for="clientsecret">Client Secret:</label>
-        <input type="password" id="clientsecret" name="clientsecret"><br/>
-        
-        <input type="submit" value="Connect">
-    </form> 
-    
+                <label for="websocketurl">Web Socket URL:</label>
+                <input type="text" id="websocketurl" name="websocketurl" value="wss://localhost:6868"><br/>
+
+                <label for="clientid">Client Id:</label>
+                <input type="text" id="clientid" name="clientid" value="IX2l8ZRzuWVOVKDKUt12A1uvvJRrf838FYtbOPJl"><br/>
+
+                <label for="clientsecret">Client Secret:</label>
+                <input type="password" id="clientsecret" name="clientsecret"><br/>
+
+                <input type="submit" value="Connect">
+            </fieldset>
+        </form>
+        <form id="subscribeform">
+            <fieldset id="subscribefieldset" form="subscribeform" disabled>
+                <legend>Event Stream Subscriptions</legend>
+
+                <input type="checkbox" id="faccheckbox" name="faccheckbox" value="fac">
+                <label for="faccheckbox"> Facial Expressions</label><br>
+
+                <input type="checkbox" id="motcheckbox" name="motcheckbox" value="mot">
+                <label for="motcheckbox"> Motion</label><br>
+
+                <input type="submit" value="Subscribe">
+            </fieldset>
+        </form>
+    </div>    
 </body>
 </html>

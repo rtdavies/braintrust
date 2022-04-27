@@ -1,34 +1,38 @@
-let running = false;
 let cortex = null;
 
-function run(){
-    if (!running) {
-        running = true;
-        start();
+function connect(){
+    if (!cortex) {
+        connecting = true;
+        let config = {
+            "clientId":document.getElementById('clientid').value,
+            "clientSecret":document.getElementById('clientsecret').value,
+            "websocketUrl":document.getElementById('websocketurl').value
+        }
+
+        cortex = new Cortex(config)
+        cortex.connect()
     }
-    return false; // don't reload page
+
+    return false // don't reload page
 }
 
-function start() {
-    let config = {
-        "clientId":document.getElementById('clientid').value,
-        "clientSecret":document.getElementById('clientsecret').value,
-        "websocketUrl":document.getElementById('websocketurl').value
-    }
-    
-    cortex = new Cortex(config)
-    cortex.connect()
-    
+function subscribe() {
+    // if (cortex.session) {
+    // get stream name values from checkboxes
+    //     cortex.subscribe()
+    // }
     // let streams = ['fac']
     // cortex.subscribe(streams)
+    return false // don't reload page
 }
 
 function init(){
-    document.getElementById('form').onsubmit = run;
+    document.getElementById('connectform').onsubmit = connect
+    document.getElementById('subscribeform').onsubmit = subscribe
 }
 
 function teardown() {
-    if (running && cortex) {
+    if (connecting && cortex) {
         // TODO: implement disconnect()
         // cortex.disconnect()
     }
@@ -36,33 +40,34 @@ function teardown() {
 
 class Cortex {
     constructor (config) {
-        this.socket = new WebSocket(config.websocketUrl)        
+        this.socket = new WebSocket(config.websocketUrl)
         this.config = config
     }
-    
+
     /*
-     * see Cortex API documnetation for steps to create an API session
-     * https://emotiv.gitbook.io/cortex-api/overview-of-api-flow
-     */
-    connect(){
+    * see Cortex API documnetation for steps to create an API session
+    * https://emotiv.gitbook.io/cortex-api/overview-of-api-flow
+    */
+    async connect(){
         console.log('connect()')
         this.socket.addEventListener('open',async ()=>{
             let requestAccessResult = ""
             await this.requestAccess().then((result)=>{requestAccessResult=result})
-                    
+
             if ("error" in requestAccessResult){
                 throw new Error('You must login on CortexUI before request for grant access')
-            } else {
-                if(requestAccessResult?.result?.accessGranted){
-                    await this.initializeSession()
-                }
-                else{
-                    console.log('You must accept access request from this app on CortexUI then rerun')
-                    throw new Error('You must accept access request from this app on CortexUI')
-                }
-            }   
+            } else if(!requestAccessResult?.result?.accessGranted){
+                console.log('You must accept access request from this app on CortexUI then rerun')
+                throw new Error('You must accept access request from this app on CortexUI')
+            }
+
+            this.session = await this.initializeSession()
+
+            if (this.session) {
+                document.getElementById('subscribefieldset').disabled = false
+            }
         })
-    }                
+    }
 
     requestAccess(){
         console.log('requestAccess()')
@@ -71,17 +76,17 @@ class Cortex {
         return new Promise(function(resolve, reject){
             const REQUEST_ACCESS_ID = 1
             let requestAccessRequest = {
-                "jsonrpc": "2.0", 
-                "method": "requestAccess", 
-                "params": { 
-                    "clientId": config.clientId, 
+                "jsonrpc": "2.0",
+                "method": "requestAccess",
+                "params": {
+                    "clientId": config.clientId,
                     "clientSecret": config.clientSecret
                 },
                 "id": REQUEST_ACCESS_ID
             }
-            
+
             socket.send(JSON.stringify(requestAccessRequest));
-            
+
             socket.addEventListener('message', (message)=>{
                 try {
                     let msgData = JSON.parse(message.data)
@@ -94,40 +99,49 @@ class Cortex {
             })
         })
     }
-    
-     async initializeSession(){
+
+    async initializeSession(){
         let headsetId = ""
-        await this.queryHeadsetId().then((headset)=>{headsetId = headset})
-        
         let controlDeviceResult = ""
-        await this.controlDevice(headsetId).then((result)=>{controlDeviceResult=result})
-        
         let authToken = ""
-        await this.authorize().then((auth)=>{authToken = auth})
-        
         let sessionId = ""
-        await this.createSession(authToken, headsetId).then((result)=>{sessionId=result})
-        
+        await this.queryHeadsetId()
+        .then((headset)=>{
+            headsetId = headset
+            return this.controlDevice(headsetId)
+        })
+        .then((result)=>{
+            controlDeviceResult=result
+            return this.authorize()
+        })
+        .then((auth)=>{
+            authToken = auth
+            return this.createSession(authToken, headsetId)
+        })
+        .then((result)=>{sessionId=result})
+
         console.log('Headset Id: ' + headsetId)
         console.log('ControlDevice status: ' + controlDeviceResult?.result?.message)
         console.log('Auth token: ' + authToken)
         console.log('Session Id: ' + sessionId)
 
-        this.authToken = authToken
-        this.sessionId = sessionId
-    }    
-    
+        return { // session object
+            "authToken": authToken,
+            "sessionId": sessionId
+        }
+    }
+
     queryHeadsetId(){
         console.log('queryHeadsetId()')
         const QUERY_HEADSET_ID = 2
         let socket = this.socket
         let queryHeadsetRequest =  {
-            "jsonrpc": "2.0", 
+            "jsonrpc": "2.0",
             "id": QUERY_HEADSET_ID,
             "method": "queryHeadsets",
             "params": {}
         }
-        
+
         return new Promise(function(resolve, reject){
             socket.send(JSON.stringify(queryHeadsetRequest));
             socket.addEventListener('message', (message)=>{
@@ -142,24 +156,24 @@ class Cortex {
                             console.log('No have any headset, please connect headset with your pc.')
                         }
                     }
-                    
+
                 } catch (error) {
                     console.log('queryHeadsetId result error: ' + error + ': ' + JSON.stringify(message))
                 }
             })
         })
     }
-    
+
     authorize(){
         console.log('authorize()')
         let socket = this.socket
         let config = this.config
         return new Promise(function(resolve, reject){
             const AUTHORIZE_ID = 4
-            let authorizeRequest = { 
-                "jsonrpc": "2.0", "method": "authorize", 
-                "params": { 
-                    "clientId": config.clientId, 
+            let authorizeRequest = {
+                "jsonrpc": "2.0", "method": "authorize",
+                "params": {
+                    "clientId": config.clientId,
                     "clientSecret": config.clientSecret
                 },
                 "id": AUTHORIZE_ID
@@ -178,7 +192,7 @@ class Cortex {
             })
         })
     }
-    
+
     controlDevice(headsetId){
         console.log('controlDevice()')
         let socket = this.socket
@@ -204,14 +218,14 @@ class Cortex {
                     console.log('controlDevice result error: ' + error + ': ' + JSON.stringify(message))
                 }
             })
-        }) 
+        })
     }
-    
+
     createSession(authToken, headsetId){
         console.log('createSession()')
         let socket = this.socket
         const CREATE_SESSION_ID = 5
-        let createSessionRequest = { 
+        let createSessionRequest = {
             "jsonrpc": "2.0",
             "id": CREATE_SESSION_ID,
             "method": "createSession",
@@ -237,32 +251,40 @@ class Cortex {
             })
         })
     }
-    
+
     subscribe(streams){
-        this.subRequest(streams, this.authToken, this.sessionId)
-        this.socket.addEventListener('message', (data)=>{
-            // log stream data to file or console here
-            console.log(JSON.stringify(data))
-        })
-    }                
-    
+        this.unsubscribeAll(this.subscribedStreams)
+        if (streams.length > 0) {
+            this.subRequest(streams, this.authToken, this.sessionId)
+            this.socket.addEventListener('message', (data)=>{
+                // could check stream id here to see which stream the data are from
+
+                // log stream data to file or console here
+                console.log(JSON.stringify(data))
+            })
+        }
+        this.subscribedStreams = streams
+    }
+
     subRequest(stream, authToken, sessionId){
         let socket = this.socket
-        const SUB_REQUEST_ID = 6 
-        let subRequest = { 
-            "jsonrpc": "2.0", 
-            "method": "subscribe", 
-            "params": { 
+        const SUB_REQUEST_ID = 6
+        let subRequest = {
+            "jsonrpc": "2.0",
+            "method": "subscribe",
+            "params": {
                 "cortexToken": authToken,
                 "session": sessionId,
                 "streams": stream
-            }, 
+            },
             "id": SUB_REQUEST_ID
         }
-        console.log('sub request: ', subRequest)
         socket.send(JSON.stringify(subRequest))
         socket.addEventListener('message', (message)=>{
             try {
+                // the result returns a stream id (sid) and streamName
+                // we should return the stream id
+
                 // if(JSON.parse(data)['id']==SUB_REQUEST_ID){
                 console.log('SUB REQUEST RESULT --------------------------------')
                 console.log(message.data)
