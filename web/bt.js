@@ -17,12 +17,23 @@ function connect(){
 }
 
 function subscribe() {
-    // if (cortex.session) {
-    // get stream name values from checkboxes
-    //     cortex.subscribe()
-    // }
-    // let streams = ['fac']
-    // cortex.subscribe(streams)
+    let streams = []
+    if (cortex.session) {
+        // facial expressions event stream
+        let faccheckbox = document.getElementById('faccheckbox')
+        if (faccheckbox.checked) {
+            streams.push(faccheckbox.value)
+        }
+
+        // headset motion event stream
+        let motcheckbox = document.getElementById('motcheckbox')
+        if (motcheckbox.checked) {
+            streams.push(motcheckbox.value)
+        }
+
+        cortex.subscribe(streams)
+    }
+
     return false // don't reload page
 }
 
@@ -127,7 +138,8 @@ class Cortex {
 
         return { // session object
             "authToken": authToken,
-            "sessionId": sessionId
+            "id": sessionId,
+            "subscribedStreams": []
         }
     }
 
@@ -252,21 +264,44 @@ class Cortex {
         })
     }
 
-    subscribe(streams){
-        this.unsubscribeAll(this.subscribedStreams)
+    async subscribe(streams){
+        if (this.session.subscribedStreams.length > 0) {
+            this.unsubscribeAll(this.session)
+            this.session.subscribedStreams = []
+        }
+
         if (streams.length > 0) {
-            this.subRequest(streams, this.authToken, this.sessionId)
+            this.subscribeStreams(streams, this.session.authToken, this.session.id)
             this.socket.addEventListener('message', (data)=>{
                 // could check stream id here to see which stream the data are from
 
                 // log stream data to file or console here
                 console.log(JSON.stringify(data))
             })
+
+            this.session.subscribedStreams = streams
         }
-        this.subscribedStreams = streams
     }
 
-    subRequest(stream, authToken, sessionId){
+    unsubscribeAll(session) {
+        console.log('unsubscribeAll(' + JSON.stringify(session.subscribedStreams) + ')')
+        let socket = this.socket
+        const UNSUB_REQUEST_ID = 7
+        let subRequest = {
+            "jsonrpc": "2.0",
+            "method": "unsubscribe",
+            "params": {
+                "cortexToken": session.authToken,
+                "session": session.id,
+                "streams": session.subscribedStreams
+            },
+            "id": UNSUB_REQUEST_ID
+        }
+        socket.send(JSON.stringify(subRequest))
+    }
+
+    subscribeStreams(streams, authToken, sessionId) {
+        console.log('subscribeStreams(' + JSON.stringify(streams) + ')')
         let socket = this.socket
         const SUB_REQUEST_ID = 6
         let subRequest = {
@@ -275,7 +310,7 @@ class Cortex {
             "params": {
                 "cortexToken": authToken,
                 "session": sessionId,
-                "streams": stream
+                "streams": streams
             },
             "id": SUB_REQUEST_ID
         }
@@ -286,9 +321,7 @@ class Cortex {
                 // we should return the stream id
 
                 // if(JSON.parse(data)['id']==SUB_REQUEST_ID){
-                console.log('SUB REQUEST RESULT --------------------------------')
                 console.log(message.data)
-                console.log('\r\n')
                 // }
             } catch (error) {
                 console.log('createSession result error: ' + error + ': ' + JSON.stringify(message))
