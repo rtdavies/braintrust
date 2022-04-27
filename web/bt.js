@@ -10,13 +10,13 @@ function run(){
 }
 
 function start() {
-    const socketUrl = 'wss://localhost:6868'
-    let user = {
+    let config = {
         "clientId":document.getElementById('clientid').value,
-        "clientSecret":document.getElementById('clientsecret').value
+        "clientSecret":document.getElementById('clientsecret').value,
+        "websocketUrl":document.getElementById('websocketurl').value
     }
     
-    cortex = new Cortex(user, socketUrl)
+    cortex = new Cortex(config)
     
     let streams = ['fac']
     cortex.sub(streams)
@@ -34,24 +34,23 @@ function teardown() {
 }
 
 class Cortex {
-    constructor (user, socketUrl) {
-        // create socket
-        this.socket = new WebSocket(socketUrl)        
-        this.user = user
+    constructor (config) {
+        this.socket = new WebSocket(config.websocketUrl)        
+        this.config = config
     }
     
     requestAccess(){
         console.log('requestAccess()')
         let socket = this.socket
-        let user = this.user
+        let config = this.config
         return new Promise(function(resolve, reject){
             const REQUEST_ACCESS_ID = 1
             let requestAccessRequest = {
                 "jsonrpc": "2.0", 
                 "method": "requestAccess", 
                 "params": { 
-                    "clientId": user.clientId, 
-                    "clientSecret": user.clientSecret
+                    "clientId": config.clientId, 
+                    "clientSecret": config.clientSecret
                 },
                 "id": REQUEST_ACCESS_ID
             }
@@ -110,16 +109,14 @@ class Cortex {
     authorize(){
         console.log('authorize()')
         let socket = this.socket
-        let user = this.user
+        let config = this.config
         return new Promise(function(resolve, reject){
             const AUTHORIZE_ID = 4
             let authorizeRequest = { 
                 "jsonrpc": "2.0", "method": "authorize", 
                 "params": { 
-                    "clientId": user.clientId, 
-                    "clientSecret": user.clientSecret, 
-                    "license": user.license,
-                    "debit": user.debit
+                    "clientId": config.clientId, 
+                    "clientSecret": config.clientSecret
                 },
                 "id": AUTHORIZE_ID
             }
@@ -264,7 +261,7 @@ class Cortex {
     }
     
     /**
-    * - check if user logined
+    * - check if connected
     * - check if app is granted for access
     * - query session info to prepare for sub and train
     */
@@ -273,7 +270,7 @@ class Cortex {
         console.log('checkGrantAccessAndQuerySessionInfo()')
         await this.requestAccess().then((result)=>{requestAccessResult=result})
                 
-        // check if user is logged in CortexUI
+        // check if logged in CortexUI
         if ("error" in requestAccessResult){
             console.log('You must login on CortexUI before request for grant access then rerun')
             throw new Error('You must login on CortexUI before request for grant access')

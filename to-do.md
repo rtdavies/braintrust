@@ -1,7 +1,7 @@
 # To do list
 1. ~~Connect to websocket server~~
 1. ~~Subscribe to facial events~~
-1. Add text field for URL (and any other text inputs?)
+1. ~~Add text field for URL (and any other text inputs?)~~
 1. Convert the start() function to connect()1. Don't subscribe to any events during start.
 1. Add checkboxes for each event type, disabled when not connected.
 1. Enable checkboxes on connection.
