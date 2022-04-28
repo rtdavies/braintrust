@@ -1,5 +1,6 @@
 let cortex = null
 let logEvents = false
+let animateEvents = false
 let eventFrequency = 1.0
 let lastEvent = {}
 
@@ -8,6 +9,7 @@ function init(){
     document.getElementById('connectform').onsubmit = connect
     document.getElementById('subscribeform').onsubmit = updateSubscriptions
     document.getElementById('logeventsecheckbox').addEventListener('change', (event) => {logEvents = event.currentTarget.checked})
+    document.getElementById('animateeventsecheckbox').addEventListener('change', (event) => {animateEvents = event.currentTarget.checked})
     document.getElementById('eventfrequency').addEventListener('change', (event) => {eventFrequency = event.currentTarget.value})
 }
 
@@ -361,6 +363,39 @@ class Cortex {
         lastEvent[eventName] = eventTime
         if (logEvents) {
             console.log(JSON.stringify(msgData))
+        }
+        if (animateEvents) {
+            if (eventName == 'fac') {
+                // https://emotiv.gitbook.io/cortex-api/data-subscription/data-sample-object#facial-expression
+                // ["eyeAct","uAct","uPow","lAct","lPow"]
+                let facialValues = msgData.fac
+                let eyeAction = facialValues[0] // "neutral", "blink", "winkL", "winkR"
+                if (eyeAction != "neutral") {
+                    document.getElementById(eyeAction).classList.add("animate")
+                    setTimeout(() => {
+                        document.getElementById(eyeAction).classList.remove("animate")
+                    }, 500)
+                }
+
+                let upperFaceAction = facialValues[1] // "neutral", "frown", "surprise"
+                let upperFacePower = facialValues[2] // decimal between [0,1]
+                if (upperFaceAction != "neutral") {
+                    setTimeout(() => { // offset from other actions
+                        document.getElementById(upperFaceAction).classList.add("animate")
+                        setTimeout(() => {document.getElementById(upperFaceAction).classList.remove("animate")}, 500)
+                    }, 100)
+                }
+
+                let lowerFaceAction = facialValues[3] // "neutral", "smile", "clench"
+                let lowerFacePower = facialValues[4]  // decimal between [0,1]
+                if (lowerFaceAction != "neutral") {
+                    setTimeout(() => { // offset from other actions
+                    document.getElementById(lowerFaceAction).classList.add("animate")
+                    setTimeout(() => {document.getElementById(lowerFaceAction).classList.remove("animate")}, 500)
+                }, 200)
+                }
+            }
+            console.log('Animate: ' + eventName + ': ' + msgData[eventName])
         }
     }
 }

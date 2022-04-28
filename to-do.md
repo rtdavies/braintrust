@@ -11,11 +11,10 @@
 1. ~~Checkbox to enable/disable logging events~~
 1. ~~add try/catch blocks around form processing to ensure the functions always return false (and thus the page is never reloaded by a form submission~~)
 1. ~~Rate limit event processing (only process events every n millis)~~
-1. Create model to back UI with 1 event type (e.g. smile)
-1. Create a UI animation to trigger when model changes by some threshold
-1. Add additional events to model
-1. Disable checkboxes when connection lost/closed.
-1. Add twisty to fold form-div closed/open
-1. Display event stream on the web page itself (transparent text box, semi-transparent font)
-1. Make display events div foldable (the last 1000 or so?).
-1. Add new button to disconnect.
+1. ~~Create model to back UI with 1 event type (e.g. smile)~~
+1. ~~Create a UI animation. Trigger when model says so (e.g. rate-limited, smiling yes/no, intensity of animation based on strength of smile)~~
+1. ~~Add additional events to model~~
+1. Add motion events to model
+1. Reconnect when connection lost (with same input values)
+1. Create background animation (when no events are being received)
+1. Add twisty to fold input div closed/open

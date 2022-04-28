@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="stylesheet" href="bt.css">
     <script src="bt.js"></script>
     <script>
         window.onload = init
@@ -10,7 +11,7 @@
 
     <h2>Brain Trust</h2>
 
-    <div id="inputdiv">
+    <div id="inputcontainerdiv">
         <form id="connectform">
             <fieldset id="connectfieldset" form="connectform">
                 <legend>Cortex API Connection Configuration</legend>
@@ -47,10 +48,23 @@
                 <label for="logeventsecheckbox"> Log events</label>
                 <input type="checkbox" id="logeventsecheckbox" name="logeventsecheckbox"><br/>
 
+                <label for="animateeventsecheckbox"> Animate events</label>
+                <input type="checkbox" id="animateeventsecheckbox" name="animateeventsecheckbox"><br/>
+
                 <label for="eventfrequency"> Event frequency</label>
                 <input type="number" id="eventfrequency" name="eventfrequency" min="0.0" step=".5" value="1.0"><br/>
             </fieldset>
         </form>
+    </div>
+    <div id="animationcontainerdiv">
+        <!-- Facial events: "blink", "winkL", "winkR", "frown", "surprise", "smile", "clench"  -->
+        <div id="blink" class="animationdiv"></div>
+        <div id="winkL" class="animationdiv"></div>
+        <div id="winkR" class="animationdiv"></div>
+        <div id="frown" class="animationdiv"></div>
+        <div id="surprise" class="animationdiv"></div>
+        <div id="smile" class="animationdiv"></div>
+        <div id="clench" class="animationdiv"></div>
     </div>
 </body>
 </html>
