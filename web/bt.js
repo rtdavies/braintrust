@@ -1,9 +1,14 @@
-let cortex = null;
+let cortex = null
+let logEvents = false
+let eventFrequency = 1.0
+let lastEvent = {}
 
 // Called on page load. Binds javascript functions to the html forms
 function init(){
     document.getElementById('connectform').onsubmit = connect
     document.getElementById('subscribeform').onsubmit = updateSubscriptions
+    document.getElementById('logeventsecheckbox').addEventListener('change', (event) => {logEvents = event.currentTarget.checked})
+    document.getElementById('eventfrequency').addEventListener('change', (event) => {eventFrequency = event.currentTarget.value})
 }
 
 // Get Cortex API Connection Configuration form values and connect to server
@@ -88,7 +93,18 @@ class Cortex {
 
                 } else if ('sid' in msgData) {
                     // process a subscribedStream's event
-                    console.log(JSON.stringify(msgData))
+                    let eventName = null
+                    let eventTime = null
+                    if ("fac" in msgData) {
+                        eventName = "fac"
+                        eventTime = parseInt(msgData.time * 1000)
+                    } else if ("mot" in msgData) {
+                        eventName = "mot"
+                        eventTime = parseInt(msgData.time * 1000)
+                    }
+                    if (eventName && this.shouldProcessEvent(eventName, eventTime)) {
+                        this.processEvent(eventName, eventTime, msgData)
+                    }
                 }
             } catch (error) {
                 console.log('subscribe result error: ' + error + ': ' + JSON.stringify(message))
@@ -334,5 +350,17 @@ class Cortex {
             "id": apis.SUBSCRIBE
         }
         socket.send(JSON.stringify(subRequest))
+    }
+
+    shouldProcessEvent(eventName, eventTime) {
+        let lastEventTime = lastEvent[eventName]
+        return !lastEventTime || eventTime > (lastEventTime + eventFrequency * 1000)
+    }
+
+    processEvent(eventName, eventTime, msgData) {
+        lastEvent[eventName] = eventTime
+        if (logEvents) {
+            console.log(JSON.stringify(msgData))
+        }
     }
 }
