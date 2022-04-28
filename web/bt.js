@@ -116,6 +116,7 @@ class Cortex {
             this.session = await this.initializeSession()
 
             if (this.session) {
+                document.getElementById('connectfieldset').disabled = true
                 document.getElementById('subscribefieldset').disabled = false
             }
         })
