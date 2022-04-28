@@ -28,8 +28,8 @@ function updateSubscriptions() {
     try {
         if (cortex.session) {
             document.getElementById("subscribefieldset")
-                .querySelectorAll("[type=checkbox]:checked")
-                .forEach(checkbox => streams.push(checkbox.value))
+            .querySelectorAll("[type=checkbox]:checked")
+            .forEach(checkbox => streams.push(checkbox.value))
 
             cortex.updateSubscriptions(streams)
         }
@@ -78,6 +78,30 @@ class Cortex {
     */
     async connect(){
         console.log('connect()')
+
+        // Eventually we'll subscribe to some event streams. Add a listener for those events.
+        this.socket.addEventListener('message', (message)=>{
+            try {
+                let msgData = JSON.parse(message.data)
+                if(msgData?.id==apis.SUBSCRIBE){
+                    // process the response to the subscribe request
+                    msgData.result.success.forEach(success => {
+                        this.session.subscribedStreams.push(success.streamName)
+                    })
+
+                    console.log('Subscribed streams: ' + JSON.stringify(this.session.subscribedStreams))
+
+                    // TODO: process failures?
+
+                } else if ('sid' in msgData) {
+                    // process a subscribedStream's event
+                    console.log(JSON.stringify(msgData))
+                }
+            } catch (error) {
+                console.log('subscribe result error: ' + error + ': ' + JSON.stringify(message))
+            }
+        })
+
         this.socket.addEventListener('open',async ()=>{
             let requestAccessResult = ""
             await this.requestAccess().then((result)=>{requestAccessResult=result})
@@ -117,7 +141,7 @@ class Cortex {
             socket.addEventListener('message', (message)=>{
                 try {
                     let msgData = JSON.parse(message.data)
-                    if(msgData.id==apis.REQUEST_ACCESS){
+                    if(msgData?.id==apis.REQUEST_ACCESS){
                         resolve(msgData)
                     }
                 } catch (error) {
@@ -174,7 +198,7 @@ class Cortex {
             socket.addEventListener('message', (message)=>{
                 try {
                     let msgData = JSON.parse(message.data)
-                    if(msgData.id==apis.QUERY_HEADSETS){
+                    if(msgData?.id==apis.QUERY_HEADSETS){
                         if(msgData.result.length > 0){
                             let headsetId = msgData.result[0].id
                             resolve(headsetId)
@@ -208,7 +232,7 @@ class Cortex {
             socket.addEventListener('message', (message)=>{
                 try {
                     let msgData = JSON.parse(message.data)
-                    if(msgData.id==apis.AUTHORIZE){
+                    if(msgData?.id==apis.AUTHORIZE){
                         let cortexToken = msgData.result.cortexToken
                         resolve(cortexToken)
                     }
@@ -236,7 +260,7 @@ class Cortex {
             socket.addEventListener('message', (message)=>{
                 try {
                     let msgData = JSON.parse(message.data)
-                    if(msgData.id==apis.CONTROL_DEVICE){
+                    if(msgData?.id==apis.CONTROL_DEVICE){
                         resolve(msgData)
                     }
                 } catch (error) {
@@ -265,7 +289,7 @@ class Cortex {
                 // console.log(data)
                 try {
                     let msgData = JSON.parse(message.data)
-                    if(msgData.id==apis.CREATE_SESSION){
+                    if(msgData?.id==apis.CREATE_SESSION){
                         let sessionId = msgData.result.id
                         resolve(sessionId)
                     }
@@ -283,15 +307,7 @@ class Cortex {
         }
 
         if (streams.length > 0) {
-            this.subscribe(streams, this.session.authToken, this.session.id)
-            this.socket.addEventListener('message', (data)=>{
-                // could check stream id here to see which stream the data are from
-
-                // log stream data to file or console here
-                console.log(JSON.stringify(data))
-            })
-
-            this.session.subscribedStreams = streams
+            this.subscribe(streams, this.session)
         }
     }
 
@@ -311,31 +327,18 @@ class Cortex {
         socket.send(JSON.stringify(subRequest))
     }
 
-    subscribe(streams, authToken, sessionId) {
-        console.log('subscribeStreams(' + JSON.stringify(streams) + ')')
+    subscribe(streams, session) {
         let socket = this.socket
         let subRequest = {
             "jsonrpc": "2.0",
             "method": "subscribe",
             "params": {
-                "cortexToken": authToken,
-                "session": sessionId,
+                "cortexToken": session.authToken,
+                "session": session.id,
                 "streams": streams
             },
             "id": apis.SUBSCRIBE
         }
         socket.send(JSON.stringify(subRequest))
-        socket.addEventListener('message', (message)=>{
-            try {
-                // the result returns a stream id (sid) and streamName
-                // we should return the stream id
-
-                // if(JSON.parse(data)['id']==apis.SUBSCRIBE){
-                console.log(message.data)
-                // }
-            } catch (error) {
-                console.log('createSession result error: ' + error + ': ' + JSON.stringify(message))
-            }
-        })
     }
 }
