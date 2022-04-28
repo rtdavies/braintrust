@@ -1,5 +1,11 @@
 let cortex = null;
 
+// Called on page load. Binds javascript functions to the html forms
+function init(){
+    document.getElementById('connectform').onsubmit = connect
+    document.getElementById('subscribeform').onsubmit = updateSubscriptions
+}
+
 // Get Cortex API Connection Configuration form values and connect to server
 function connect(){
     try {
@@ -38,19 +44,6 @@ function updateSubscriptions() {
     }
 
     return false // don't reload page
-}
-
-// Called on page load. Binds above functions to the html forms
-function init(){
-    document.getElementById('connectform').onsubmit = connect
-    document.getElementById('subscribeform').onsubmit = updateSubscriptions
-}
-
-function teardown() {
-    if (connecting && cortex) {
-        // TODO: implement disconnect()
-        // cortex.disconnect()
-    }
 }
 
 // Constants to represent Cortex API message types
