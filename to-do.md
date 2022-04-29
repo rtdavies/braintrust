@@ -14,7 +14,8 @@
 1. ~~Create model to back UI with 1 event type (e.g. smile)~~
 1. ~~Create a UI animation. Trigger when model says so (e.g. rate-limited, smiling yes/no, intensity of animation based on strength of smile)~~
 1. ~~Add additional events to model~~
+1. ~~Add twisty to fold input div closed/open~~
+1. ~~Fill the screen for demo~~
 1. Add motion events to model
 1. Reconnect when connection lost (with same input values)
 1. Create background animation (when no events are being received)
-1. Add twisty to fold input div closed/open

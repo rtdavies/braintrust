@@ -378,21 +378,23 @@ class Cortex {
                 }
 
                 let upperFaceAction = facialValues[1] // "neutral", "frown", "surprise"
-                let upperFacePower = facialValues[2] // decimal between [0,1]
+                // let upperFacePower = facialValues[2] // decimal between [0,1]
                 if (upperFaceAction != "neutral") {
-                    setTimeout(() => { // offset from other actions
+                    setTimeout(() => {
                         document.getElementById(upperFaceAction).classList.add("animate")
                         setTimeout(() => {document.getElementById(upperFaceAction).classList.remove("animate")}, 500)
-                    }, 100)
+                    },
+                    100)  // offset from other actions
                 }
 
                 let lowerFaceAction = facialValues[3] // "neutral", "smile", "clench"
-                let lowerFacePower = facialValues[4]  // decimal between [0,1]
+                // let lowerFacePower = facialValues[4]  // decimal between [0,1]
                 if (lowerFaceAction != "neutral") {
-                    setTimeout(() => { // offset from other actions
-                    document.getElementById(lowerFaceAction).classList.add("animate")
-                    setTimeout(() => {document.getElementById(lowerFaceAction).classList.remove("animate")}, 500)
-                }, 200)
+                    setTimeout(() => {
+                        document.getElementById(lowerFaceAction).classList.add("animate")
+                        setTimeout(() => {document.getElementById(lowerFaceAction).classList.remove("animate")}, 500)
+                    },
+                    200) // offset from other actions
                 }
             }
             console.log('Animate: ' + eventName + ': ' + msgData[eventName])

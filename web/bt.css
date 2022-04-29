@@ -1,11 +1,26 @@
+html {
+	height:100%;
+	width:100%;
+}
+
+body {
+	height:100%;
+	width:100%;
+}
+
+form {
+    width: 50%;
+}
+
+div#inputcontainerdiv {
+    margin: 20px;
+}
+
 div.animationdiv {
-    height: 100px;
-    width: 100px;
-    background-color: rgb(46, 46, 46);
-    border: none;
-    padding: none;
-    margin: none;
     float: left;
+    height: 450px;
+    width: 360px;
+    background-color: rgb(46, 46, 46);
 }
 
 @-webkit-keyframes animation {
@@ -29,4 +44,18 @@ div.animationdiv {
     -webkit-animation-duration: 500ms;
     -webkit-animation-iteration-count: 1;
     -webkit-animation-timing-function: ease-in-out;
+}
+
+p#twisty {
+    z-index: 3;
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    float: right;
+    font-weight: bolder;
+    color: grey;
+    font-family: sans-serif;
+    font-size: xx-large;
+    text-align: center;
+    vertical-align: top;
 }
