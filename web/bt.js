@@ -41,8 +41,8 @@ function updateSubscriptions() {
     try {
         if (cortex.session) {
             document.getElementById("subscribefieldset")
-            .querySelectorAll("[type=checkbox]:checked")
-            .forEach(checkbox => streams.push(checkbox.value))
+                .querySelectorAll("[type=checkbox]:checked")
+                .forEach(checkbox => streams.push(checkbox.value))
 
             cortex.updateSubscriptions(streams)
         }
@@ -365,12 +365,14 @@ class Cortex {
             console.log(JSON.stringify(msgData))
         }
         if (animateEvents) {
+            let baselineAnimation = true
             if (eventName == 'fac') {
                 // https://emotiv.gitbook.io/cortex-api/data-subscription/data-sample-object#facial-expression
                 // ["eyeAct","uAct","uPow","lAct","lPow"]
                 let facialValues = msgData.fac
                 let eyeAction = facialValues[0] // "neutral", "blink", "winkL", "winkR"
                 if (eyeAction != "neutral") {
+                    baselineAnimation = false
                     document.getElementById(eyeAction).classList.add("animate")
                     setTimeout(() => {
                         document.getElementById(eyeAction).classList.remove("animate")
@@ -380,6 +382,7 @@ class Cortex {
                 let upperFaceAction = facialValues[1] // "neutral", "frown", "surprise"
                 // let upperFacePower = facialValues[2] // decimal between [0,1]
                 if (upperFaceAction != "neutral") {
+                    baselineAnimation = false
                     setTimeout(() => {
                         document.getElementById(upperFaceAction).classList.add("animate")
                         setTimeout(() => {document.getElementById(upperFaceAction).classList.remove("animate")}, 500)
@@ -390,6 +393,7 @@ class Cortex {
                 let lowerFaceAction = facialValues[3] // "neutral", "smile", "clench"
                 // let lowerFacePower = facialValues[4]  // decimal between [0,1]
                 if (lowerFaceAction != "neutral") {
+                    baselineAnimation = false
                     setTimeout(() => {
                         document.getElementById(lowerFaceAction).classList.add("animate")
                         setTimeout(() => {document.getElementById(lowerFaceAction).classList.remove("animate")}, 500)
@@ -397,7 +401,18 @@ class Cortex {
                     200) // offset from other actions
                 }
             }
-            console.log('Animate: ' + eventName + ': ' + msgData[eventName])
+            if (baselineAnimation) {
+                document.querySelectorAll('.animationdiv').forEach(e => {
+                    if (Math.random() > .5) { // randomly select elements to fire
+                        let delay = Math.trunc(Math.random() * 500) // random delay per element to animate
+                        setTimeout(() => {
+                            e.classList.add("animate")
+                            setTimeout(() => {e.classList.remove("animate")}, 500)
+                        },
+                        delay);
+                    }
+                })
+            }
         }
     }
 }

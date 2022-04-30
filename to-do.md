@@ -16,6 +16,6 @@
 1. ~~Add additional events to model~~
 1. ~~Add twisty to fold input div closed/open~~
 1. ~~Fill the screen for demo~~
+1. ~~Create baseline animation (when no events are being received)~~
 1. Add motion events to model
 1. Reconnect when connection lost (with same input values)
-1. Create background animation (when no events are being received)
