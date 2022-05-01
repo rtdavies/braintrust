@@ -372,33 +372,38 @@ class Cortex {
                 let facialValues = msgData.fac
                 let eyeAction = facialValues[0] // "neutral", "blink", "winkL", "winkR"
                 if (eyeAction != "neutral") {
-                    baselineAnimation = false
-                    document.getElementById(eyeAction).classList.add("animate")
-                    setTimeout(() => {
-                        document.getElementById(eyeAction).classList.remove("animate")
-                    }, 500)
+                    let divToAnimate = document.getElementById(eyeAction)
+                    if (divToAnimate) {
+                        baselineAnimation = false
+                        divToAnimate.classList.add("animate")
+                        setTimeout(() => {divToAnimate.classList.remove("animate")}, 500)
+                    }
                 }
 
                 let upperFaceAction = facialValues[1] // "neutral", "frown", "surprise"
                 // let upperFacePower = facialValues[2] // decimal between [0,1]
                 if (upperFaceAction != "neutral") {
-                    baselineAnimation = false
-                    setTimeout(() => {
-                        document.getElementById(upperFaceAction).classList.add("animate")
-                        setTimeout(() => {document.getElementById(upperFaceAction).classList.remove("animate")}, 500)
-                    },
-                    100)  // offset from other actions
+                    let divToAnimate = document.getElementById(upperFaceAction)
+                    if (divToAnimate) {
+                        baselineAnimation = false
+                        divToAnimate.classList.add("animate")
+                        setTimeout(() => {
+                            setTimeout(() => {divToAnimate.classList.remove("animate")}, 500)
+                        }, 100)  // offset from other actions
+                    }
                 }
 
                 let lowerFaceAction = facialValues[3] // "neutral", "smile", "clench"
                 // let lowerFacePower = facialValues[4]  // decimal between [0,1]
                 if (lowerFaceAction != "neutral") {
                     baselineAnimation = false
-                    setTimeout(() => {
-                        document.getElementById(lowerFaceAction).classList.add("animate")
-                        setTimeout(() => {document.getElementById(lowerFaceAction).classList.remove("animate")}, 500)
-                    },
-                    200) // offset from other actions
+                    let divToAnimate = document.getElementById(lowerFaceAction)
+                    if (divToAnimate) {
+                        setTimeout(() => {
+                            divToAnimate.classList.add("animate")
+                            setTimeout(() => {divToAnimate.classList.remove("animate")}, 500)
+                        }, 200) // offset from other actions
+                    }
                 }
             }
             if (baselineAnimation) {

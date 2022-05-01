@@ -17,5 +17,8 @@
 1. ~~Add twisty to fold input div closed/open~~
 1. ~~Fill the screen for demo~~
 1. ~~Create baseline animation (when no events are being received)~~
-1. Add motion events to model
+~~1. Make branch with 3 animation divs in one row (blink, smile, frown)~~
+1. Make branch with different animations (pulse fast, pulse slow, flash, heart beat)
+1. Simplify playing with colors (e.g. add color selection/specification to UI?)
 1. Reconnect when connection lost (with same input values)
+1. Add motion events to model
