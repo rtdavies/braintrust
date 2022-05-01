@@ -1,4 +1,10 @@
-html {
+
+:root {
+    --animation-height: 890px;
+    --animation-background-color: rgb(46, 46, 46);
+}
+
+  html {
 	height:100%;
 	width:100%;
 }
@@ -18,10 +24,10 @@ div#inputcontainerdiv {
 
 div.animationdiv {
     float: left;
-    height: 450px;
-    line-height: 450px; /* text centered verticly */
-    width: 360px;
-    background-color: rgb(46, 46, 46);
+    height: var(--animation-height);
+    line-height: var(--animation-height); /* text centered verticly */
+    width: 33%;
+    background-color: var(--animation-background-color);
     text-align: center;
     color: rgb(84, 84, 84);
 }
@@ -38,7 +44,7 @@ div.animationdiv {
         background-color: rgb(78, 78, 78);
     }
     100% {
-        background-color: rgb(46, 46, 46);
+        background-color: var(--animation-background-color);
     }
 }
 
