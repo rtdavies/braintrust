@@ -16,11 +16,18 @@ div#inputcontainerdiv {
     margin: 20px;
 }
 
+div#animationcontainerdiv {
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+
 div.animationdiv {
+    position: relative;
     float: left;
-    height: 450px;
-    line-height: 450px; /* text centered verticly */
-    width: 360px;
+    height: 35%;
+    line-height: 315px; /* text centered verticly */
+    width: 20%;
     background-color: rgb(46, 46, 46);
     text-align: center;
     color: rgb(84, 84, 84);

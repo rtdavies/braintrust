@@ -17,5 +17,6 @@
 1. ~~Add twisty to fold input div closed/open~~
 1. ~~Fill the screen for demo~~
 1. ~~Create baseline animation (when no events are being received)~~
+1. ~~Make grid of 15 divs. Each facial expression has multiple divs (see Alison's design, New_BrainTrust_Layout.pdf emailed 5/4/22)~~
 1. Add motion events to model
 1. Reconnect when connection lost (with same input values)

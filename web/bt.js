@@ -384,8 +384,8 @@ class Cortex {
                 if (upperFaceAction != "neutral") {
                     baselineAnimation = false
                     setTimeout(() => {
-                        document.getElementById(upperFaceAction).classList.add("animate")
-                        setTimeout(() => {document.getElementById(upperFaceAction).classList.remove("animate")}, 500)
+                        document.querySelectorAll('.' + upperFaceAction).forEach(e => e.classList.add("animate"))
+                        setTimeout(() => {document.querySelectorAll('.' + upperFaceAction).forEach(e => e.classList.remove("animate"))}, 500)
                     },
                     100)  // offset from other actions
                 }
@@ -395,8 +395,8 @@ class Cortex {
                 if (lowerFaceAction != "neutral") {
                     baselineAnimation = false
                     setTimeout(() => {
-                        document.getElementById(lowerFaceAction).classList.add("animate")
-                        setTimeout(() => {document.getElementById(lowerFaceAction).classList.remove("animate")}, 500)
+                        document.querySelectorAll('.' + lowerFaceAction).forEach(e => e.classList.add("animate"))
+                        setTimeout(() => {document.querySelectorAll('.' + lowerFaceAction).forEach(e => e.classList.remove("animate"))}, 500)
                     },
                     200) // offset from other actions
                 }
