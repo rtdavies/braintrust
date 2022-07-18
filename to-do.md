@@ -19,3 +19,4 @@
 1. ~~Create baseline animation (when no events are being received)~~
 1. Add motion events to model
 1. Reconnect when connection lost (with same input values)
+1. render 5 section display, 4 quadrants plus a fifth in the center
